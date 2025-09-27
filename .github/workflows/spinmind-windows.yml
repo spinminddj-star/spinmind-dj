@@ -1,0 +1,57 @@
+name: SpinMind Windows Build + Installer
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install vcpkg
+        shell: pwsh
+        run: |
+          git clone https://github.com/microsoft/vcpkg $env:USERPROFILE\vcpkg
+          & $env:USERPROFILE\vcpkg\bootstrap-vcpkg.bat
+
+      - name: Install dependencies with vcpkg
+        shell: pwsh
+        run: |
+          $vcpkg = "$env:USERPROFILE\vcpkg\vcpkg.exe"
+          $triplet = "x64-windows"
+          & $vcpkg install qtbase rubberband fftw3 portaudio taglib libsamplerate soundtouch ebur128 chromaprint --triplet $triplet
+
+      - name: Install NSIS (for CPack)
+        shell: pwsh
+        run: choco install nsis -y
+
+      - name: Configure (CMake)
+        shell: pwsh
+        run: |
+          cmake -S . -B build `
+            -DCMAKE_TOOLCHAIN_FILE=$env:USERPROFILE\vcpkg\scripts\buildsystems\vcpkg.cmake `
+            -DVCPKG_TARGET_TRIPLET=x64-windows `
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build (Release)
+        shell: pwsh
+        run: cmake --build build --config Release -- /m:4
+
+      - name: Package (CPack NSIS)
+        shell: pwsh
+        run: |
+          cd build
+          cpack -C Release
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: spinmind-windows-installer
+          path: build\*.exe
