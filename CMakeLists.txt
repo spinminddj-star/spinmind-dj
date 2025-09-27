@@ -5199,3 +5199,30 @@ if(APPLE AND MACOS_BUNDLE)
   )
   install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/BundleInstall.cmake")
 endif()
+
+# --- SpinMind packaging (CPack) ---
+set(CPACK_PACKAGE_NAME "SpinMind DJ")
+set(CPACK_PACKAGE_VENDOR "SpinMind Audio")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Harmonic-first, phrase-aware DJ software")
+set(CPACK_PACKAGE_VERSION "0.1.0")
+set(CPACK_PACKAGE_CONTACT "Donald Robertson <your-email@example.com>")
+
+# Windows packaging (use NSIS installer by default)
+if(WIN32)
+    set(CPACK_GENERATOR "NSIS")
+    set(CPACK_NSIS_DISPLAY_NAME "SpinMind DJ")
+    set(CPACK_NSIS_CONTACT "your-email@example.com")
+    set(CPACK_NSIS_URL_INFO_ABOUT "https://github.com/spinminddj-star/spinmind-dj")
+endif()
+
+# macOS packaging (produces .dmg)
+if(APPLE)
+    set(CPACK_GENERATOR "DragNDrop")
+endif()
+
+# Linux packaging (.deb by default)
+if(UNIX AND NOT APPLE)
+    set(CPACK_GENERATOR "DEB")
+endif()
+
+include(CPack)
